@@ -16,13 +16,13 @@
         <RowConstraints />
     </rowConstraints>
     <children>
-        <VBox prefHeight="200.0" prefWidth="508.0">
+        <VBox fx:id="verticalView" prefHeight="200.0" prefWidth="508.0">
             <children>
                 <MenuBar fx:id="menuBar" nodeOrientation="LEFT_TO_RIGHT">
                     <menus>
                         <Menu mnemonicParsing="false" text="Sites">
                             <items>
-                                <MenuItem onAction="#handleAddSiteButton" fx:id="addSite" mnemonicParsing="false" text="Add Site.." />
+                                <MenuItem fx:id="addSite" mnemonicParsing="false" onAction="#handleAddSiteButton" text="Add Site.." />
                             </items>
                         </Menu>
                         <Menu mnemonicParsing="false" text="Edit">
@@ -36,6 +36,7 @@
                      </items></Menu>
                     </menus>
                 </MenuBar>
+
             </children>
         </VBox>
     </children>

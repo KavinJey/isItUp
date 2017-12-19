@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.*?>
+<?import java.lang.*?>
+<?import java.util.*?>
+<?import javafx.scene.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<GridPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="85.0" prefWidth="435.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="sample.Controllers.Connections">
+  <columnConstraints>
+    <ColumnConstraints hgrow="SOMETIMES" maxWidth="400.0" minWidth="10.0" prefWidth="159.0" />
+    <ColumnConstraints hgrow="SOMETIMES" maxWidth="466.0" minWidth="10.0" prefWidth="441.0" />
+  </columnConstraints>
+  <rowConstraints>
+    <RowConstraints maxHeight="75.0" minHeight="10.0" prefHeight="42.0" vgrow="SOMETIMES" />
+      <RowConstraints maxHeight="120.0" minHeight="10.0" prefHeight="36.0" vgrow="SOMETIMES" />
+  </rowConstraints>
+   <children>
+      <Label text="Site Link" GridPane.halignment="CENTER" GridPane.valignment="CENTER" />
+      <TextField fx:id="siteLink" maxWidth="300.0" prefHeight="25.0" prefWidth="150.0" GridPane.columnIndex="1" GridPane.halignment="CENTER" GridPane.valignment="CENTER" />
+      <Button fx:id="confirm" mnemonicParsing="false" onAction="#handleConfirmButton" text="Connect" GridPane.columnIndex="1" GridPane.rowIndex="1" GridPane.valignment="CENTER">
+         <GridPane.margin>
+            <Insets left="125.0" />
+         </GridPane.margin>
+      </Button>
+   </children>
+</GridPane>

@@ -1,7 +1,12 @@
 package sample.Controllers;
 
 import it.grabz.grabzit.GrabzItClient;
+import javafx.beans.property.SimpleStringProperty;
+import javafx.beans.property.StringProperty;
+import javafx.concurrent.Service;
 import javafx.concurrent.Task;
+import javafx.concurrent.WorkerStateEvent;
+import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
@@ -17,9 +22,8 @@ import sample.Model.Site;
 import java.io.File;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
-import java.net.HttpURLConnection;
-import java.net.URL;
-import java.net.UnknownHostException;
+import java.net.*;
+import java.util.concurrent.CancellationException;
 
 public class siteOverviewController {
 
@@ -27,18 +31,17 @@ public class siteOverviewController {
     @FXML private TableView<Site> siteTableView;
     @FXML private TableColumn<Site, String> linkColumn;
     @FXML MenuItem addConnection = new MenuItem();
-    @FXML MenuItem editConnection = new MenuItem();
     @FXML MenuItem aboutItem = new MenuItem();
 
+
+    @FXML Button refreshButton = new Button();
 
     //Right side of the split-pane
     @FXML Label statusText = new Label("text");
     @FXML Circle statusCircle = new Circle();
     @FXML ImageView webShot = new ImageView();
+    @FXML ProgressBar progressToScreenShot = new ProgressBar();
 
-
-
-    // TODO: 22/12/17 Have all the handle button methods working (Add, Edit, About)
     //TODO have this pull data from an XML file instead of other shit tyvm
 
 
@@ -46,16 +49,14 @@ public class siteOverviewController {
     private Main mainApp;
 
 
-    public siteOverviewController() {
-    }
-
-
     @FXML
     private void initialize() {
 
 
-        // Initialize the person table with the two columns.
-        linkColumn.setCellValueFactory(cellData -> cellData.getValue().getLink());
+        progressToScreenShot.setOpacity(0);
+
+        // Initialize the site column with some sicc data from our xml
+        linkColumn.setCellValueFactory(cellData -> cellData.getValue().linkProperty());
 
         //Anon function to make addConnection function work
         addConnection.setOnAction(x -> {
@@ -92,48 +93,46 @@ public class siteOverviewController {
 
         //Anon function to make editConnection function work
 
+
+
     }
 
 
-    @FXML private void handleSiteSelected() throws IOException {
+    @FXML private void handleRefreshButton(){
+        mainApp.initRootLayout();
+        mainApp.showSiteOverview();
+
+    }
+
+    @FXML private void handleSiteSelected() {
 
         Site row = siteTableView.getSelectionModel().getSelectedItem();
+        webShot.setImage(null);
+        progressToScreenShot.setOpacity(0);
 
         Boolean siteIsUp = null;
         try {
-            siteIsUp = checkConnection(row.getLink().getValue());
-        } catch (IOException e) {
+            siteIsUp = checkConnection(row.getLink());
+        } catch (Exception e) {
             e.printStackTrace();
+            statusCircle.setFill(Color.RED);
+            statusText.setText("Oops! " + row.getLink() + " is down.");
         }
 
         if(siteIsUp) {
             statusCircle.setFill(Color.LIGHTGREEN);
-            statusText.setText(row.getLink().getValue() + " is up!");
-            lookUp(row.getLink().getValue());
+            statusText.setText(row.getLink() + " is up!");
+            lookUp(row);
         }
 
         else {
             statusCircle.setFill(Color.RED);
-            statusText.setText("Oops! " + row.getLink().getValue() + " is down.");
+            statusText.setText("Oops! " + row.getLink() + " is down.");
         }
 
 
     }
 
-
-    public void spillTheBeans() throws IOException {
-        File f = new File("./src/sample/Resources/"); // current directory
-
-        File[] files = f.listFiles();
-        for (File file : files) {
-            if (file.isDirectory()) {
-                System.out.print("directory:");
-            } else {
-                System.out.print("     file:");
-            }
-            System.out.println(file.getCanonicalPath());
-        }
-    }
 
     //Connection Check Method
     public static boolean checkConnection(String targetUrl) throws IOException {
@@ -161,35 +160,54 @@ public class siteOverviewController {
         siteTableView.setItems(mainApp.getSiteData());
     }
 
-    private void lookUp(String link) throws IOException {
+    private void lookUp(Site site) {
 
-
+        String link = site.getLink();
 
         String imageName = link.replace("/", "1");
         imageName = imageName.replace(".", "4");
         imageName = imageName.replace(":", "3");
 
-        String filePath = "../Resources/" + imageName + ".jpg";
-        String dir = System.getProperty("user.dir") + "/src/sample/Resources/";
-        filePath = dir + imageName + ".jpg";
 
-        final String path = filePath;
+        if(site.getImagePath() != null){
+            //what to do if this shit does have an image already
+            System.out.println("sample/Resources/images/" + site.getImagePath() + ".jpg");
+            String imagePath = "/sample/Resources/images/" + site.getImagePath() + ".jpg";
+            imagePath.trim();
 
-        File file = new File(path);
 
-        if(file.exists()){
 
-            System.out.println("Okay, now we're trying to make the image");
-            System.out.println(imageName);
-            spillTheBeans();
-            Image image = new Image("sample/Resources/" + imageName + ".jpg");
+            System.out.println(site.getImagePath());
+            System.out.println(System.getProperty("user.dir"));
+            Image image = new Image(imagePath);
+
             webShot.setImage(image);
+
         }
 
         else{
-            //Task for image, so it doesn't stall the rest of the application
-            getSnapShot(link);
-            lookUp(link);
+            //What to do if the image doesn't exist
+             Snapshot service = new Snapshot();
+             service.setLink(site.getLink());
+
+             service.setOnSucceeded(t -> {
+                 System.out.println("done:" + t.getSource().getValue());
+                 site.setImagePath(t.getSource().getValue().toString());
+                 progressToScreenShot.setProgress(100);
+                 progressToScreenShot.setOpacity(0);
+
+                 Image image = new Image("src/sample/Resources/images/" + site.getImagePath() + ".jpg");
+                 webShot.setImage(image);
+
+             });
+
+             service.setOnRunning(t -> {
+                 progressToScreenShot.setOpacity(1.0);
+                 progressToScreenShot.setProgress(service.getProgress());
+             });
+
+             service.start();
+
 
 
         }//End of Else
@@ -197,39 +215,54 @@ public class siteOverviewController {
     }
 
 
+    //This is gonna be the service that runs the screenshot shit after I wake up
+    private static class Snapshot extends Service<String> {
+        private StringProperty link = new SimpleStringProperty();
 
-    private void getSnapShot(String link){
-
-        //TODO make this fucking thing save the image to XML
-
-        String imageName = link.replace("/", "1");
-        imageName = imageName.replace(".", "4");
-        imageName = imageName.replace(":", "3");
-
-        String dir = System.getProperty("user.dir") + "/src/sample/Resources/";
-        String filePath = dir + imageName + ".jpg";
-
-        final String path = filePath;
-
-        Task task = new Task() {
-            @Override
-            protected Object call() throws Exception {
-                GrabzItClient grabzIt = new GrabzItClient("NWIxOTU0NjlkZWQwNGNiODg0MjkyOTgzYTcxZTU0ODI=", "PD9mRj9APyI/Pz9qKz8/Hj8iDz8/P1JLPz96Pz8/X14=");
-                grabzIt.URLToImage(link);
-                grabzIt.SaveTo(path);
-
-                return null;
-            }
-        };
-
-        Thread th = new Thread(task);
-        th.start();
-        while(th.getState() != Thread.State.TERMINATED) {
-            System.out.println(th.getState());
-
+        public final void setLink(String value) {
+            link.set(value);
         }
 
+        public final String getLink() {
+            return link.getValue();
+        }
 
+        public final StringProperty linkProperty() {
+            return link;
+        }
+
+        protected Task<String> createTask() {
+            final String link = getLink();
+            return new Task<String>() {
+                protected String call() {
+
+
+                    String imageName = link.replace("/", "1");
+                    imageName = imageName.replace(".", "4");
+                    imageName = imageName.replace(":", "3");
+
+                    String dir = System.getProperty("user.dir") + "/src/sample/Resources/images/";
+                    String filePath = dir + imageName + ".jpg";
+
+                    GrabzItClient grabzIt = new GrabzItClient("NWIxOTU0NjlkZWQwNGNiODg0MjkyOTgzYTcxZTU0ODI=", "PD9mRj9APyI/Pz9qKz8/Hj8iDz8/P1JLPz96Pz8/X14=");
+
+                    try {
+                        grabzIt.URLToImage(link);
+                        grabzIt.SaveTo(filePath);
+
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+
+                    return imageName;
+                }
+            };
+        }
     }
 
+
 }
+
+
+
+

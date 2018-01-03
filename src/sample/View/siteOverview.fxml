@@ -12,10 +12,9 @@
     <children>
         <MenuBar prefHeight="400.0" prefWidth="600.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
             <menus>
-                <Menu mnemonicParsing="false" text="Edit...">
+                <Menu mnemonicParsing="false" text="Add..">
                     <items>
                         <MenuItem fx:id="addConnection" mnemonicParsing="false" text="Add Connection" />
-                        <MenuItem fx:id="editConnection" mnemonicParsing="false" text="Edit Connection.." />
                     </items>
                 </Menu>
                 <Menu mnemonicParsing="false" text="Help">
@@ -61,6 +60,11 @@
                                     <Insets top="35.0" />
                                  </HBox.margin>
                               </Circle>
+                              <Button fx:id="refreshButton" mnemonicParsing="false" onAction="#handleRefreshButton" prefHeight="25.0" prefWidth="78.0" text="Refresh">
+                                 <HBox.margin>
+                                    <Insets left="25.0" top="30.0" />
+                                 </HBox.margin>
+                              </Button>
                            </children>
                         </HBox>
                         <Label fx:id="statusText" alignment="CENTER" minWidth="50.0" prefHeight="15.0" prefWidth="375.0" text="text">
@@ -68,6 +72,11 @@
                               <Insets />
                            </VBox.margin>
                         </Label>
+                        <ProgressBar fx:id="progressToScreenShot" prefHeight="20.0" prefWidth="239.0" progress="0.0">
+                           <VBox.margin>
+                              <Insets left="65.0" top="5.0" />
+                           </VBox.margin>
+                        </ProgressBar>
                      </children>
                   </VBox>
                </children></AnchorPane>

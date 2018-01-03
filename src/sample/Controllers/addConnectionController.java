@@ -28,10 +28,14 @@ public class addConnectionController  {
     @FXML
     private void initialize() {
 
+        siteLink.setFocusTraversable(false); //makes the promptText appear
+
         //Code for if they hit enter, same method runs
-        siteLink.setOnKeyReleased((event) -> { if(event.getCode() == KeyCode.ENTER) {
+        siteLink.setOnKeyPressed((event) -> { if(event.getCode() == KeyCode.ENTER) {
             ActionEvent x = new ActionEvent();
-            handleConfirmButton(x); }
+            handleConfirmButton(x);
+            siteLink.getScene().getWindow().hide();
+        }
         });
 
 
@@ -43,7 +47,7 @@ public class addConnectionController  {
         //Getting text from the textfield
         String siteName = siteLink.getText();
 
-        if(siteName.contains(".")){
+        if(siteName.contains("http")){
             //Do I check connectivity here or somewhere else hmmmm???
 
             Site newSite = new Site(siteName);
@@ -56,6 +60,7 @@ public class addConnectionController  {
         }
 
         else {
+
             Alert alert = new Alert(Alert.AlertType.WARNING);
             alert.setHeaderText("ERROR");
             alert.setContentText("Invalid Site Link, please try again.");

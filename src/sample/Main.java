@@ -5,6 +5,7 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
+import javafx.scene.control.Alert;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.BorderPane;
 import javafx.stage.Stage;
@@ -15,6 +16,7 @@ import sample.Model.SiteListWrapper;
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.Marshaller;
 import javax.xml.bind.PropertyException;
+import javax.xml.bind.Unmarshaller;
 import java.io.File;
 import java.io.IOException;
 import java.util.prefs.Preferences;
@@ -27,19 +29,67 @@ public class Main extends Application {
     //Where our sites are held
     private ObservableList<Site> siteData = FXCollections.observableArrayList();
 
+    //Saved data from session
+    private File saveData = new File("/home/kavinjey/Desktop/IsItUp2/src/sample/Resources/data.xml");
+
     public ObservableList<Site> getSiteData() {
         return siteData;
     }
 
     public void setSiteData(ObservableList<Site> x) {
         siteData = x;
+
     }
+
+
+
+    public void setSiteFilePath(File file) {
+        Preferences prefs = Preferences.userNodeForPackage(Main.class);
+        if (file != null) {
+            prefs.put("filePath", file.getPath());
+
+            // Update the stage title.
+            primaryStage.setTitle("isItUp " + file.getName());
+        } else {
+            prefs.remove("filePath");
+
+            // Update the stage title.
+            primaryStage.setTitle("isItUp");
+        }
+    }
+
+    public void saveSiteDataToFile(File file) {
+        try {
+            JAXBContext context = JAXBContext
+                    .newInstance(SiteListWrapper.class);
+            Marshaller m = context.createMarshaller();
+            m.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, true);
+
+            // Wrapping our person data.
+            SiteListWrapper wrapper = new SiteListWrapper();
+            wrapper.setSites(siteData);
+
+            // Marshalling and saving XML to the file.
+            m.marshal(wrapper, file);
+
+            // Save the file path to the registry.
+            setSiteFilePath(file);
+        } catch (Exception e) { // catches ANY exception
+            Alert alert = new Alert(Alert.AlertType.ERROR);
+            alert.setTitle("Error");
+            alert.setHeaderText("Could not save data");
+            alert.setContentText("Could not save data to file:\n" + file.getPath());
+
+            alert.showAndWait();
+        }
+    }
+
 
 
     public Main() {
         // Add some sample data
-        siteData.add(new Site("https://www.riotgames.com/en"));
-        System.out.println(siteData.get(0).getLink());
+
+
 
 
     }
@@ -49,8 +99,17 @@ public class Main extends Application {
         this.primaryStage = primaryStage;
         this.primaryStage.setTitle("IsItUp?");
 
+        loadSiteDataFromFile(saveData);
+
         initRootLayout();
         showSiteOverview();
+    }
+
+    @Override
+    public void stop(){
+
+        saveSiteDataToFile(saveData);
+
     }
 
 
@@ -69,6 +128,7 @@ public class Main extends Application {
         } catch (IOException e) {
             e.printStackTrace();
         }
+
     }
 
     public void showSiteOverview(){
@@ -90,58 +150,29 @@ public class Main extends Application {
         }
     }
 
-
-    public void saveSiteXML(File file) {
+    public void loadSiteDataFromFile(File file) {
         try {
             JAXBContext context = JAXBContext
                     .newInstance(SiteListWrapper.class);
-            Marshaller m = context.createMarshaller();
-            m.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, true);
+            Unmarshaller um = context.createUnmarshaller();
 
-            // Wrapping our person data.
-            SiteListWrapper wrapper = new SiteListWrapper();
-            wrapper.setSites(siteData);
+            // Reading XML from the file and unmarshalling.
+            SiteListWrapper wrapper = (SiteListWrapper) um.unmarshal(file);
 
-            // Marshalling and saving XML to the file.
-            m.marshal(wrapper, file);
+            siteData.clear();
+            siteData.addAll(wrapper.getSites());
 
             // Save the file path to the registry.
-            setSitesFilePath(file);
+            setSiteFilePath(file);
 
-        }catch(Exception e){
-            System.out.println("Lol wtf");
+        } catch (Exception e) { // catches ANY exception
+            Alert alert = new Alert(Alert.AlertType.ERROR);
+            alert.setTitle("Error");
+            alert.setHeaderText("Could not load data");
+            alert.setContentText("The sites from your previous session were not saved correctly.");
+            alert.setGraphic(null);
 
-        }
-    }
-
-    public File getSiteFilePath() {
-        Preferences prefs = Preferences.userNodeForPackage(Main.class);
-        String filePath = prefs.get("filePath", null);
-        if (filePath != null) {
-            return new File(filePath);
-        } else {
-            return null;
-        }
-    }
-
-    /**
-     * Sets the file path of the currently loaded file. The path is persisted in
-     * the OS specific registry.
-     *
-     * @param file the file or null to remove the path
-     */
-    public void setSitesFilePath(File file) {
-        Preferences prefs = Preferences.userNodeForPackage(Main.class);
-        if (file != null) {
-            prefs.put("filePath", file.getPath());
-
-            // Update the stage title.
-            primaryStage.setTitle("AddressApp - " + file.getName());
-        } else {
-            prefs.remove("filePath");
-
-            // Update the stage title.
-            primaryStage.setTitle("AddressApp");
+            alert.showAndWait();
         }
     }
 

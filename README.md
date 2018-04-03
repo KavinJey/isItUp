@@ -4,7 +4,7 @@ Are you a web developer that sucks at backend? Do you need to constantly reassur
 
 With isItUp you can seamlessly add your websites and get live data as to whether they are up or not. You can:
 - See if your clients are getting service
-- Displays a picture of the website in current form if webserver is healthy
+- Displays a picture of the website in current form if web server is healthy
 - See if the website is up 
 - Track as many websites as you'd like 
 
